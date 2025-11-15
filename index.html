@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src https://generativelanguage.googleapis.com; img-src 'self' data:;">
+    <title>NeuroScribe V11 - Modular Architecture</title>
+    <link rel="stylesheet" href="neuroscribe.css">
+</head>
+<body>
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <h1 style="margin: 0;">NeuroScribe V11 - Professional Clinical Intelligence</h1>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <div id="apiKeyStatus" style="font-size: 0.85rem; color: #6b7280;"></div>
+                <button onclick="openSettings()" style="padding: 8px 16px; background: #4A90E2; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 500;">
+                    ⚙️ Settings
+            </button>
+        </div>
+
+        <div id="status" class="status disconnected">
+            🔑 Checking API key...
+        </div>
+
+        <!-- V10.2.4 PHASE 1.2: ULTRATHINK Regeneration Progress Indicator -->
+        <div id="resolution-progress-container" style="display: none; margin: 20px auto; max-width: 800px; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
+            <div style="color: white; font-weight: 600; font-size: 1.1rem; margin-bottom: 12px; display: flex; align-items: center; gap: 10px;">
+                <span id="resolution-progress-icon">🔄</span>
+                <span id="resolution-progress-text">Processing resolutions...</span>
+            </div>
+            <div style="background: rgba(255,255,255,0.2); border-radius: 8px; height: 30px; overflow: hidden; position: relative;">
+                <div id="resolution-progress-bar" style="background: linear-gradient(90deg, #4ade80 0%, #22c55e 100%); height: 100%; width: 0%; transition: width 0.5s ease, background 0.3s ease; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 0.9rem; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);">
+                    <span id="resolution-progress-percent">0%</span>
+                </div>
+            </div>
+            <div style="color: rgba(255,255,255,0.9); font-size: 0.85rem; margin-top: 8px; font-style: italic;" id="resolution-progress-stage">
+                Initializing...
+            </div>
+            <div style="color: rgba(255,255,255,0.8); font-size: 0.75rem; margin-top: 4px;" id="resolution-progress-eta">
+                Estimated time: Calculating...
+            </div>
+        </div>
+
+        <!-- Settings Modal -->
+        <div id="settingsModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 10000; justify-content: center; align-items: center;">
+            <div style="background: white; border-radius: 12px; padding: 30px; max-width: 600px; width: 90%; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+                <h2 style="color: #4A90E2; margin-bottom: 15px; font-size: 1.4rem;">⚙️ API Key Settings</h2>
+
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; font-weight: 500; margin-bottom: 8px; color: #333; font-size: 0.9rem;">
+                        Google Gemini API Key:
+                    </label>
+                    <input
+                        type="password"
+                        id="apiKeyInput"
+                        placeholder="AIzaSy... (paste your API key here)"
+                        style="width: 100%; padding: 10px; border: 1px solid #E1E4E8; border-radius: 6px; font-size: 0.9rem; font-family: monospace;"
+                    />
+                    <div style="margin-top: 6px; font-size: 0.8rem; color: #6b7280;">
+                        Your API key is encrypted and stored locally in your browser. It never leaves your device.
+                    </div>
+                </div>
+
+                <div style="background: #EBF5FB; padding: 12px; border-radius: 6px; margin-bottom: 15px; border-left: 3px solid #4A90E2;">
+                    <strong style="font-size: 0.9rem;">📌 Don't have an API key?</strong><br>
+                    <div style="margin-top: 6px; font-size: 0.85rem; line-height: 1.6;">
+                        1. Visit <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color: #4A90E2; text-decoration: underline;">Google AI Studio</a><br>
+                        2. Sign in with your Google account<br>
+                        3. Click "Create API Key"<br>
+                        4. Copy the key and paste it above<br>
+                        5. It's FREE with generous limits!
+                    </div>
+                </div>
+
+                <div id="apiKeyStatusModal" style="margin-bottom: 15px; padding: 10px; border-radius: 6px; display: none; font-size: 0.9rem;"></div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px;">
+                    <button onclick="saveAPIKey()" style="padding: 10px; background: #10b981; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 500;">
+                        💾 Save & Test
+                    </button>
+                    <button onclick="testAPIKey()" style="padding: 10px; background: #4A90E2; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 500;">
+                        🧪 Test Key
+                    </button>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                    <button onclick="clearAPIKey()" style="padding: 10px; background: #ef4444; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 500;">
+                        🗑️ Clear Key
+                    </button>
+                    <button onclick="closeSettings()" style="padding: 10px; background: #6b7280; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 500;">
+                        Cancel
+                    </button>
+                </div>
+
+                <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 0.85rem; color: #666;">
+                    <strong>🔒 Privacy & Security:</strong><br>
+                    • API key stored locally in your browser only<br>
+                    • Encrypted using Base64 + character reversal<br>
+                    • No server storage - your key never leaves your device<br>
+                    • Clear browser data to remove the key
+                </div>
+            </div>
+        </div>
+
+        <div class="grid">
+            <!-- Briefing Panel: Pre-Consultation Research -->
+            <div class="panel briefing-panel">
+                <div class="panel-header" onclick="togglePanel('briefing')">
+                    <h2>🔬 Pre-Consultation Briefing</h2>
+                    <span class="collapse-icon" id="briefing-icon">▼</span>
+                </div>
+
+                <div class="panel-content" id="briefing-content">
+                <div class="info" style="margin-bottom: 12px;">
+                    <strong>Expert Analysis:</strong> Enter specific pathology or select common category for deep research
+                </div>
+
+                <!-- Custom Pathology Input -->
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 8px; font-size: 0.9rem;">Specific Pathology / Diagnosis:</label>
+                    <input
+                        type="text"
+                        id="customPathology"
+                        placeholder="e.g., C5-6 foraminal stenosis with radiculopathy, diffuse low-grade glioma..."
+                        style="width: 100%; padding: 10px; border: 1px solid #E1E4E8; border-radius: 6px; font-size: 0.9rem; margin-bottom: 8px;"
+                        oninput="onCustomPathologyInput()"
+                    />
+                    <div style="font-size: 0.8rem; color: #666; font-style: italic;">
+                        Enter specific pathology for deep search, or select common category below
+                    </div>
+                </div>
+
+                <!-- Pathology Quick-Select -->
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 8px; font-size: 0.9rem;">Or select common pathology:</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                        <button onclick="selectPathology('spine-degenerative')" class="pathology-btn" data-pathology="spine-degenerative">
+                            🦴 Spine Deg
+                        </button>
+                        <button onclick="selectPathology('spine-trauma')" class="pathology-btn" data-pathology="spine-trauma">
+                            ⚠️ Trauma
+                        </button>
+                        <button onclick="selectPathology('brain-tumor')" class="pathology-btn" data-pathology="brain-tumor">
+                            🧠 Tumor
+                        </button>
+                        <button onclick="selectPathology('vascular')" class="pathology-btn" data-pathology="vascular">
+                            💉 Vascular
+                        </button>
+                        <button onclick="selectPathology('hydrocephalus')" class="pathology-btn" data-pathology="hydrocephalus">
+                            💧 Hydro
+                        </button>
+                        <button onclick="selectPathology('functional')" class="pathology-btn" data-pathology="functional">
+                            ⚙️ Functional
+                        </button>
+                        <button onclick="selectPathology('pediatric')" class="pathology-btn" data-pathology="pediatric">
+                            👶 Pediatric
+                        </button>
+                        <button onclick="selectPathology('peripheral')" class="pathology-btn" data-pathology="peripheral">
+                            🔌 Peripheral
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Research Depth -->
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 8px; font-size: 0.9rem;">Research Depth:</label>
+                    <select id="briefingDepth" style="width: 100%; padding: 8px; border: 1px solid #E1E4E8; border-radius: 6px; font-size: 0.9rem;">
+                        <option value="quick">Quick Overview (30 sec)</option>
+                        <option value="standard" selected>Standard Briefing (1 min)</option>
+                        <option value="comprehensive">Comprehensive (2 min)</option>
+                    </select>
+                </div>
+
+                <!-- Expert Document Upload -->
+                <div style="margin-bottom: 12px; border: 2px dashed #E1E4E8; border-radius: 6px; padding: 12px; background: #FAFBFC;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 8px; font-size: 0.9rem;">
+                        📚 Upload Expert Documents (Optional):
+                    </label>
+                    <div style="font-size: 0.8rem; color: #666; margin-bottom: 10px;">
+                        Upload research papers, guidelines, or notes to enrich the briefing
+                    </div>
+                    <input
+                        type="file"
+                        id="expertDocUpload"
+                        accept=".txt,.pdf,.doc,.docx"
+                        multiple
+                        style="width: 100%; padding: 8px; font-size: 0.85rem;"
+                        onchange="handleDocumentUpload(event)"
+                    />
+                    <div id="uploadedDocs" style="margin-top: 10px; font-size: 0.8rem; color: #333;">
+                    </div>
+                    <!-- Document Storage Management UI -->
+                    <div id="documentStorageUI"></div>
+                </div>
+
+                <!-- Generate Button -->
+                <button onclick="generateDeepBriefing()" id="briefingBtn" class="success" style="width: 100%; margin-bottom: 15px;" disabled>
+                    🎯 Generate Deep Research + Checklist
+                </button>
+
+                <!-- Briefing Output -->
+                <div id="briefingOutput" style="background: white; border: 1px solid #E1E4E8; border-radius: 6px; padding: 12px; min-height: 200px; max-height: none; overflow: auto; resize: both; font-size: 0.85rem; line-height: 1.5;">
+                    <p style="color: #9ca3af; text-align: center; padding: 30px 10px;">
+                        Select a pathology type to generate pre-consultation briefing
+                    </p>
+                </div>
+                </div>
+            </div>
+
+            <!-- Transcript Panel: Input -->
+            <div class="panel">
+                <div class="panel-header" onclick="togglePanel('transcript')">
+                    <h2>📝 Clinical Transcript</h2>
+                    <span class="collapse-icon" id="transcript-icon">▼</span>
+                </div>
+
+                <div class="panel-content" id="transcript-content">
+
+                <!-- Consultation Type Selector -->
+                <div style="margin-bottom: 12px; background: #EBF5FB; padding: 12px; border-radius: 6px; border-left: 3px solid #4A90E2;">
+                    <label style="display: block; font-weight: 500; margin-bottom: 8px; color: #333; font-size: 0.9rem;">
+                        📋 Consultation Type:
+                    </label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                        <button onclick="selectConsultType('new')" id="consultTypeNew" class="consult-type-btn" style="padding: 10px; border: 2px solid #4A90E2; border-radius: 6px; background: #4A90E2; color: white; cursor: pointer; font-weight: 500; transition: all 0.2s; font-size: 0.9rem;">
+                            🆕 New Consultation
+                        </button>
+                        <button onclick="selectConsultType('followup')" id="consultTypeFollowup" class="consult-type-btn" style="padding: 10px; border: 2px solid #E1E4E8; border-radius: 6px; background: white; color: #333; cursor: pointer; font-weight: 500; transition: all 0.2s; font-size: 0.9rem;">
+                            🔄 Follow-up Visit
+                        </button>
+                    </div>
+                    <div id="consultTypeDescription" style="margin-top: 8px; font-size: 0.8rem; color: #6b7280;">
+                        <strong>New Consultation:</strong> Comprehensive initial assessment with full history, examination, and workup.
+                    </div>
+                </div>
+
+                <!-- Reason for Consultation Panel -->
+                <div style="margin-bottom: 15px; background: #F0F9FF; padding: 12px; border-radius: 6px; border-left: 3px solid #0EA5E9;">
+                    <label style="display: block; font-weight: 500; margin-bottom: 8px; color: #333; font-size: 0.9rem;">
+                        📋 Reason for Consultation (Chief Complaint)
+                    </label>
+                    <input type="text"
+                           id="reasonForConsult"
+                           placeholder="e.g., L4-5 disc herniation with radiculopathy, C5-6 cervical myelopathy"
+                           style="width: 100%; padding: 10px; border: 1px solid #CBD5E1; border-radius: 4px; font-size: 0.9rem; font-family: inherit;"
+                           oninput="updateReasonForConsult(this.value)">
+                    <small style="color: #6B7280; font-size: 0.75rem; display: block; margin-top: 6px;">
+                        💡 Optional: Leave blank to auto-detect from transcript
+                    </small>
+
+                    <!-- Auto-Activation Control -->
+                    <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #E2E8F0;">
+                        <label style="display: flex; align-items: center; cursor: pointer; font-size: 0.85rem;">
+                            <input type="checkbox"
+                                   id="autoDeepSearchToggle"
+                                   onchange="toggleAutoDeepSearch(this.checked)"
+                                   style="margin-right: 8px; width: 16px; height: 16px; cursor: pointer;">
+                            <span style="color: #334155;">
+                                🤖 Auto-activate <strong>Comprehensive</strong> deep search if no pre-briefing done
+                            </span>
+                        </label>
+                        <small style="color: #6B7280; font-size: 0.7rem; display: block; margin-left: 24px; margin-top: 4px;">
+                            When enabled: System will automatically research the pathology before generating note
+                        </small>
+                    </div>
+                </div>
+
+                <!-- Transcript Enhancement Mode Toggle -->
+                <div style="margin-bottom: 15px; background: #E3F2FD; padding: 12px; border-radius: 6px; border-left: 3px solid #2196F3;">
+                    <label style="display: flex; align-items: flex-start; cursor: pointer; font-size: 0.9rem;" id="transcriptEnhanceLabel">
+                        <input type="checkbox" id="transcriptEnhanceToggle" onchange="toggleTranscriptEnhancement()"
+                               style="margin-right: 10px; margin-top: 2px; width: 18px; height: 18px; cursor: pointer; flex-shrink: 0;"
+                               disabled>
+                        <div>
+                            <strong>🤖 Enhanced Mode:</strong> Add briefing-based clinical analysis & recommendations<br>
+                            <span style="font-size: 0.75rem; color: #666; font-style: italic;">
+                                Unchecked = Expand only | Checked = Briefing Integration + Analysis
+                            </span>
+                        </div>
+                    </label>
+
+                    <div id="transcriptEnhanceWarning" style="display: block; margin-top: 8px; padding: 8px; background: #FFF3CD; border-radius: 4px; font-size: 0.75rem;">
+                        💡 <strong>Note:</strong> Generate a briefing first to enable Enhanced Mode
+                    </div>
+                </div>
+
+                <div class="info">
+                    <strong>🎤 New:</strong> Use voice recording or type/paste your transcript
+                </div>
+
+                <!-- Recording Controls -->
+                <div class="recording-controls">
+                    <div class="buttons">
+                        <button onclick="startRecording()" id="startBtn">
+                            🎤 Start Recording
+                        </button>
+                        <button onclick="stopRecording()" id="stopBtn" disabled>
+                            ⏹️ Stop
+                        </button>
+                        <button onclick="pauseRecording()" id="pauseBtn" class="warning" disabled>
+                            ⏸️ Pause
+                        </button>
+                        <button onclick="clearText()">
+                            🗑️ Clear
+                        </button>
+                    </div>
+                </div>
+
+                <textarea
+                    id="transcript"
+                    placeholder="Click 'Start Recording' to use voice transcription, or type/paste your clinical encounter transcript here..."
+                ></textarea>
+
+                <!-- Stats -->
+                <div class="stats">
+                    <div class="stat-card">
+                        <div class="stat-value" id="wordCount">0</div>
+                        <div class="stat-label">Words</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="duration">00:00</div>
+                        <div class="stat-label">Duration</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="confidence">--</div>
+                        <div class="stat-label">Confidence</div>
+                    </div>
+                </div>
+                </div>
+            </div>
+
+            <!-- SOAP Quick-Entry Panel: Structured Input -->
+            <div class="panel soap-panel">
+                <div class="panel-header" onclick="togglePanel('soap')">
+                    <h2>📋 SOAP Quick-Entry</h2>
+                    <span class="collapse-icon" id="soap-icon">▼</span>
+                </div>
+
+                <div class="panel-content" id="soap-content">
+                <div class="info" style="background: #FFF3CD; border-left: 3px solid #FFA500;">
+                    <strong>📋 Quick Entry Mode:</strong> Enter brief headnotes or bullet points - AI will expand into professional clinical documentation
+                </div>
+
+                <!-- Enhancement Mode Toggle -->
+                <div style="margin-bottom: 15px; background: #E8F5E9; padding: 12px; border-radius: 6px; border-left: 3px solid #4CAF50;">
+                    <label style="display: flex; align-items: flex-start; cursor: pointer; font-size: 0.9rem;">
+                        <input type="checkbox" id="soapEnhanceToggle" onchange="toggleSOAPEnhancement()" style="margin-right: 10px; margin-top: 2px; width: 18px; height: 18px; cursor: pointer; flex-shrink: 0;">
+                        <div>
+                            <strong>🤖 V10 Pure Enhancement:</strong> AI suggestions in separate sections (never mixed with your notes)<br>
+                            <span style="font-size: 0.75rem; color: #666; font-style: italic;">
+                                ✅ Unchecked = Expand only | ✅ Checked = Expand + AI suggestions (fully separated)
+                            </span>
+                        </div>
+                    </label>
+
+                    <div id="enhanceWarning" style="display: none; margin-top: 8px; padding: 8px; background: #E3F2FD; border-radius: 4px; font-size: 0.75rem;">
+                        ℹ️ <strong>V10 Note:</strong> SOAP expand mode only uses information from your notes - briefing is NOT used
+                    </div>
+                </div>
+
+                <!-- Input Mode Toggle: Simple (Unified) vs Advanced (4-Box) -->
+                <div style="margin-bottom: 15px; background: #E3F2FD; padding: 12px; border-radius: 6px; border-left: 3px solid #2196F3;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                        <strong style="font-size: 0.9rem;">📝 Input Mode:</strong>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <button id="simpleModeBtn" onclick="switchSOAPMode('simple')"
+                                    style="padding: 6px 12px; background: #2196F3; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: 600;">
+                                Simple (1 Box)
+                            </button>
+                            <button id="advancedModeBtn" onclick="switchSOAPMode('advanced')"
+                                    style="padding: 6px 12px; background: #E0E0E0; color: #666; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: 600;">
+                                Advanced (4 Boxes)
+                            </button>
+                        </div>
+                    </div>
+                    <div style="font-size: 0.75rem; color: #555;">
+                        <span id="modeDescription">
+                            <strong>Simple:</strong> Enter all SOAP sections in one textbox (AI will intelligently parse sections)
+                        </span>
+                    </div>
+                </div>
+
+                <!-- SIMPLE MODE: Unified SOAP Input -->
+                <div id="soapUnifiedContainer" style="display: block; margin-bottom: 15px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <label style="font-weight: 600; color: #333; font-size: 0.95rem;">
+                            <span style="color: #2196F3;">✏️</span> Clinical Documentation:
+                        </label>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <span id="parseMethod" style="font-size: 0.7rem; color: #999; padding: 2px 6px; background: #F5F5F5; border-radius: 3px;">Not parsed</span>
+                            <span style="font-size: 0.75rem; color: #999;">Format: S: / O: / A: / P: or free text</span>
+                        </div>
+                    </div>
+                    <textarea
+                        id="soapUnifiedInput"
+                        class="soap-textarea"
+                        placeholder="Enter clinical notes in any format:&#10;&#10;LABELED FORMAT (Recommended):&#10;S: 45F neck pain x 3wks, worse w/ extension, denies numbness, failed NSAIDs&#10;O: Spurling+ left, motor 5/5, decreased C6 sensation left&#10;A: C5-6 foraminal stenosis with left C6 radiculopathy&#10;P: MRI cervical spine, continue NSAIDs, PT, F/U 4wks&#10;&#10;FREE TEXT FORMAT (AI will parse):&#10;Patient reports 3 weeks of neck pain that worsens with extension. No numbness. NSAIDs haven't helped. Exam shows positive Spurling test on left, motor strength 5/5, decreased C6 sensation. Impression is C5-6 foraminal stenosis with left C6 radiculopathy. Plan for MRI, NSAIDs, PT, follow-up in 4 weeks."
+                        oninput="updateUnifiedStats()"
+                        style="width: 100%; min-height: 200px; padding: 12px; border: 2px solid #2196F3; border-radius: 6px; font-size: 0.9rem; font-family: 'Courier New', monospace; resize: both; line-height: 1.6;"
+                    ></textarea>
+
+                    <!-- Parse Preview Button -->
+                    <div style="margin-top: 10px; display: flex; gap: 10px; align-items: center;">
+                        <button onclick="previewSOAPParsing()"
+                                style="padding: 8px 16px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem; font-weight: 600;">
+                            🔍 Preview Parsing
+                        </button>
+                        <span id="parseConfidence" style="font-size: 0.8rem; color: #666;"></span>
+                    </div>
+                </div>
+
+                <!-- ADVANCED MODE: 4 Separate Textareas (Original) -->
+                <div id="soapSeparateContainer" style="display: none;">
+                <!-- SOAP Section: Subjective -->
+                <div class="soap-section" style="margin-bottom: 15px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <label style="font-weight: 600; color: #333; font-size: 0.95rem;">
+                            <span style="color: #4A90E2;">●</span> Subjective (Patient History):
+                        </label>
+                        <span style="font-size: 0.75rem; color: #999;">bullets or brief phrases</span>
+                    </div>
+                    <textarea
+                        id="soapSubjective"
+                        class="soap-textarea"
+                        placeholder="Enter brief notes, e.g.:&#10;• Neck pain x 3 weeks&#10;• Worse with extension&#10;• Denies numbness&#10;• Failed NSAIDs"
+                        oninput="updateSOAPStats()"
+                        style="width: 100%; min-height: 80px; padding: 10px; border: 1px solid #E1E4E8; border-radius: 6px; font-size: 0.9rem; font-family: inherit; resize: both;"
+                    ></textarea>
+                </div>
+
+                <!-- SOAP Section: Objective -->
+                <div class="soap-section" style="margin-bottom: 15px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <label style="font-weight: 600; color: #333; font-size: 0.95rem;">
+                            <span style="color: #4A90E2;">●</span> Objective (Examination):
+                        </label>
+                        <span style="font-size: 0.75rem; color: #999;">findings only</span>
+                    </div>
+                    <textarea
+                        id="soapObjective"
+                        class="soap-textarea"
+                        placeholder="Enter exam findings, e.g.:&#10;• Spurling test positive left&#10;• Motor 5/5 throughout&#10;• Decreased C6 sensation left"
+                        oninput="updateSOAPStats()"
+                        style="width: 100%; min-height: 80px; padding: 10px; border: 1px solid #E1E4E8; border-radius: 6px; font-size: 0.9rem; font-family: inherit; resize: both;"
+                    ></textarea>
+                </div>
+
+                <!-- SOAP Section: Assessment -->
+                <div class="soap-section" style="margin-bottom: 15px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <label style="font-weight: 600; color: #333; font-size: 0.95rem;">
+                            <span style="color: #4A90E2;">●</span> Assessment (Diagnosis):
+                        </label>
+                        <span style="font-size: 0.75rem; color: #999;">your impression</span>
+                    </div>
+                    <textarea
+                        id="soapAssessment"
+                        class="soap-textarea"
+                        placeholder="Enter diagnosis/impression, e.g.:&#10;• C5-6 foraminal stenosis with left C6 radiculopathy"
+                        oninput="updateSOAPStats()"
+                        style="width: 100%; min-height: 60px; padding: 10px; border: 1px solid #E1E4E8; border-radius: 6px; font-size: 0.9rem; font-family: inherit; resize: both;"
+                    ></textarea>
+                </div>
+
+                <!-- SOAP Section: Plan -->
+                <div class="soap-section" style="margin-bottom: 15px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <label style="font-weight: 600; color: #333; font-size: 0.95rem;">
+                            <span style="color: #4A90E2;">●</span> Plan (Management):
+                        </label>
+                        <span style="font-size: 0.75rem; color: #999;">treatment & follow-up</span>
+                    </div>
+                    <textarea
+                        id="soapPlan"
+                        class="soap-textarea"
+                        placeholder="Enter management plan, e.g.:&#10;• MRI cervical spine&#10;• Continue NSAIDs&#10;• PT for cervical strengthening&#10;• F/U 4 weeks with MRI"
+                        oninput="updateSOAPStats()"
+                        style="width: 100%; min-height: 80px; padding: 10px; border: 1px solid #E1E4E8; border-radius: 6px; font-size: 0.9rem; font-family: inherit; resize: both;"
+                    ></textarea>
+                </div>
+                </div>
+                <!-- End of Advanced Mode Container -->
+
+                <!-- Stats -->
+                <div class="stats">
+                    <div class="stat-card">
+                        <div class="stat-value" id="soapTotalWords">0</div>
+                        <div class="stat-label">Total Words</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="soapSectionCount">0/4</div>
+                        <div class="stat-label">Sections</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="soapMode">Expand</div>
+                        <div class="stat-label">Mode</div>
+                    </div>
+                </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Output with Tabs -->
+            <div class="panel" id="aiDocPanel">
+                <h2>🤖 AI-Generated Documentation</h2>
+
+                <button onclick="generate()" class="success" id="generateBtn" style="width: 100%; margin-bottom: 15px;">
+                    ⚡ Generate Clinical Note
+                </button>
+
+                <!-- Tab Navigation -->
+                <div class="tab-buttons">
+                    <button class="tab-button active" onclick="switchTab('formatted')">
+                        📄 Formatted Note
+                    </button>
+                    <button class="tab-button" onclick="switchTab('raw')">
+                        📝 Raw Output
+                    </button>
+                    <button class="tab-button" onclick="switchTab('scales')">
+                        📊 Clinical Scales
+                    </button>
+                    <button class="tab-button" onclick="switchTab('export')">
+                        💾 Export Options
+                    </button>
+                    <button class="tab-button" onclick="switchTab('review')" id="review-tab-button" style="display: none;">
+                        🔍 Review Suggestions
+                    </button>
+                    <button class="tab-button" onclick="switchTab('attending')" id="attending-tab-button" style="display: none;">
+                        📊 Attending Summary
+                    </button>
+                    <button class="tab-button" onclick="switchTab('validation')" id="validation-tab-button" style="display: none;">
+                        🔍 Quality Report
+                    </button>
+                </div>
+
+                <!-- Tab 1: Formatted Note -->
+                <div class="tab-content active" id="tab-formatted">
+                    <div class="formatted-output" id="formattedOutput">
+                        <p style="color: #999; text-align: center; padding: 50px;">
+                            Generate documentation to see formatted output here
+                        </p>
+                    </div>
+                    <div class="buttons" style="margin-top: 15px;">
+                        <button onclick="copyFormatted()">📋 Copy</button>
+                        <button onclick="printFormatted()">🖨️ Print</button>
+                    </div>
+                </div>
+
+                <!-- Tab 2: Raw Output -->
+                <div class="tab-content" id="tab-raw">
+                    <textarea
+                        id="output"
+                        placeholder="Raw markdown output will appear here..."
+                        readonly
+                    ></textarea>
+                    <div class="buttons" style="margin-top: 15px;">
+                        <button onclick="copyOutput()">📋 Copy</button>
+                        <button onclick="downloadOutput()">💾 Download TXT</button>
+                    </div>
+                </div>
+
+                <!-- Tab 3: Clinical Scales -->
+                <div class="tab-content" id="tab-scales">
+                    <div class="scales-container">
+                        <div class="scale-selector" style="margin-bottom: 20px;">
+                            <label style="display: block; margin-bottom: 10px; font-weight: 600; color: #333;">
+                                Select Clinical Scale:
+                            </label>
+                            <select id="scaleSelect" onchange="loadScaleForm()" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 8px; font-size: 1rem; margin-bottom: 15px;">
+                                <option value="">-- Select a Scale --</option>
+                            </select>
+                        </div>
+
+                        <div id="scaleFormContainer" style="display: none;">
+                            <div id="scaleDescription" style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #0066CC;">
+                            </div>
+
+                            <div id="scaleQuestions" style="margin-bottom: 20px;">
+                            </div>
+
+                            <button onclick="calculateScale()" class="success" style="width: 100%; margin-bottom: 15px;">
+                                🧮 Calculate Score
+                            </button>
+
+                            <div id="scaleResults" style="display: none; background: #f9f9f9; padding: 20px; border-radius: 8px; border: 2px solid #ddd;">
+                            </div>
+                        </div>
+
+                        <div id="scalesPlaceholder" style="text-align: center; padding: 50px; color: #999;">
+                            <p>Select a clinical scale to begin assessment</p>
+                            <p style="font-size: 0.9rem; margin-top: 10px;">Scales will be automatically suggested based on selected pathology</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 4: Export Options -->
+                <div class="tab-content" id="tab-export">
+                    <div class="export-options">
+                        <div class="export-row">
+                            <label>Format:</label>
+                            <select id="exportFormat">
+                                <option value="txt">Plain Text (.txt)</option>
+                                <option value="docx">Word Document (.docx)</option>
+                                <option value="pdf">PDF Document (.pdf)</option>
+                                <option value="json">JSON Data (.json)</option>
+                                <option value="html">HTML Page (.html)</option>
+                            </select>
+                        </div>
+                        <div class="export-row">
+                            <label>Include:</label>
+                            <select id="exportIncludes">
+                                <option value="full">Full Documentation</option>
+                                <option value="summary">Summary Only</option>
+                                <option value="plan">Assessment & Plan Only</option>
+                            </select>
+                        </div>
+                        <button onclick="doExport()" class="success" style="width: 100%;">
+                            📥 Export Document
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tab: Review AI Suggestions (V6) -->
+                <div class="tab-content" id="tab-review" style="display: none;">
+                    <div style="background: #FFF3CD; padding: 14px; border-radius: 6px; margin-bottom: 20px; border-left: 4px solid #FFC107;">
+                        <strong>📋 Review AI Suggestions:</strong> Check items to keep in your final note, or uncheck to discard.
+                        Linked suggestions have dependencies on other items.
+                    </div>
+
+                    <div id="reviewInterface" style="margin-bottom: 20px;">
+                        <p style="color: #666; text-align: center; padding: 40px; font-style: italic;">
+                            Generate a note with Enhanced Mode to see AI suggestions here.
+                        </p>
+                    </div>
+
+                    <div style="margin-top: 20px; display: flex; gap: 12px; padding: 15px; background: #f6f8fa; border-radius: 6px;">
+                        <button onclick="selectAllSuggestions()" class="success" style="flex: 1; padding: 12px;">
+                            ✅ Keep All
+                        </button>
+                        <button onclick="deselectAllSuggestions()" class="warning" style="flex: 1; padding: 12px;">
+                            ❌ Discard All
+                        </button>
+                        <button onclick="generateFinalNote()" class="success" style="flex: 2; padding: 12px; font-weight: 600;">
+                            📄 Generate Final Note
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tab: Validation Quality Report (V8) -->
+                <div class="tab-content" id="tab-validation" style="display: none;">
+                    <!-- Validation Header -->
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 8px; margin-bottom: 20px; color: white;">
+                        <h2 style="margin: 0 0 10px 0; font-size: 1.5rem; color: white;">🔍 Quality Validation Report</h2>
+                        <p style="margin: 0; opacity: 0.9; font-size: 0.9rem;">6-Layer Industrial-Grade Validation Analysis</p>
+                    </div>
+
+                    <!-- Overall Quality Score -->
+                    <div id="validationOverallScore" style="background: #f9f9f9; padding: 25px; border-radius: 8px; margin-bottom: 20px; text-align: center; border: 2px solid #ddd;">
+                        <div style="font-size: 0.9rem; color: #666; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px;">Overall Quality Score</div>
+                        <div id="qualityScoreDisplay" style="font-size: 3.5rem; font-weight: bold; margin: 15px 0; color: #999;">--</div>
+                        <div id="qualityBadgeDisplay" style="display: inline-block; padding: 8px 20px; border-radius: 20px; font-weight: 600; font-size: 0.9rem; background: #e0e0e0; color: #666;">
+                            ⏳ Awaiting Validation
+                        </div>
+
+                        <!-- V10.2.3: Score Transparency Breakdown -->
+                        <div id="scoreBreakdownToggle" style="margin-top: 15px; display: none;">
+                            <button onclick="toggleScoreBreakdown()" style="background: #0969da; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600;">
+                                📊 Show Calculation Breakdown
+                            </button>
+                        </div>
+
+                        <div id="scoreBreakdown" style="display: none; margin-top: 20px; padding: 20px; background: white; border-radius: 6px; border: 2px solid #0969da; text-align: left;">
+                            <div style="font-weight: 600; color: #0969da; margin-bottom: 15px; font-size: 1rem;">🔍 How Overall Score is Calculated</div>
+
+                            <div style="margin-bottom: 12px;">
+                                <div style="font-weight: 600; color: #333; margin-bottom: 5px;">📥 Extraction Score (60% weight)</div>
+                                <div id="extractionScoreDetail" style="color: #666; font-size: 0.9rem; margin-left: 15px;">--</div>
+                            </div>
+
+                            <div style="margin-bottom: 12px;">
+                                <div style="font-weight: 600; color: #333; margin-bottom: 5px;">📤 Output Score (40% weight)</div>
+                                <div id="outputScoreDetail" style="color: #666; font-size: 0.9rem; margin-left: 15px;">--</div>
+                            </div>
+
+                            <div style="border-top: 2px dashed #ddd; padding-top: 12px; margin-top: 12px;">
+                                <div style="font-weight: 600; color: #333; margin-bottom: 5px;">🧮 Calculation Formula:</div>
+                                <div id="calculationFormula" style="color: #666; font-size: 0.9rem; margin-left: 15px; font-family: monospace; background: #f6f8fa; padding: 10px; border-radius: 4px;">--</div>
+                            </div>
+
+                            <div style="margin-top: 15px; padding: 10px; background: #fff3cd; border-left: 3px solid #ffc107; border-radius: 4px;">
+                                <div style="font-size: 0.85rem; color: #856404;">
+                                    <strong>💡 Why not a simple average?</strong><br>
+                                    Extraction quality (grounding, fabrication, completeness) is weighted higher (60%) because accurate information extraction is foundational. Output quality (consistency, proportionality) is important but secondary (40%).
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 6-Layer Breakdown -->
+                    <div id="validationLayersBreakdown" style="margin-bottom: 20px;">
+                        <h3 style="font-size: 1.2rem; margin-bottom: 15px; color: #333;">📊 Validation Layers Breakdown</h3>
+
+                        <!-- Layer 1: Grounding -->
+                        <div class="validation-layer" style="background: white; border: 2px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 12px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <div style="font-weight: 600; color: #333;">🎯 Layer 1: Source Grounding</div>
+                                <div id="grounding-score" style="font-size: 1.3rem; font-weight: bold; color: #999;">--</div>
+                            </div>
+                            <div style="font-size: 0.85rem; color: #666; margin-bottom: 8px;">Ensures generated content is grounded in source material</div>
+                            <div id="grounding-progress" style="background: #f0f0f0; height: 8px; border-radius: 4px; overflow: hidden;">
+                                <div style="background: #999; height: 100%; width: 0%; transition: width 0.3s;"></div>
+                            </div>
+                            <div id="grounding-details" style="margin-top: 10px; font-size: 0.85rem; color: #666; display: none;"></div>
+                        </div>
+
+                        <!-- Layer 2: Fabrication Detection -->
+                        <div class="validation-layer" style="background: white; border: 2px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 12px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <div style="font-weight: 600; color: #333;">🤖 Layer 2: Fabrication Detection</div>
+                                <div id="fabrication-score" style="font-size: 1.3rem; font-weight: bold; color: #999;">--</div>
+                            </div>
+                            <div style="font-size: 0.85rem; color: #666; margin-bottom: 8px;">AI-powered hallucination detection (semantic + term-based)</div>
+                            <div id="fabrication-progress" style="background: #f0f0f0; height: 8px; border-radius: 4px; overflow: hidden;">
+                                <div style="background: #999; height: 100%; width: 0%; transition: width 0.3s;"></div>
+                            </div>
+                            <div id="fabrication-details" style="margin-top: 10px; font-size: 0.85rem; color: #666; display: none;"></div>
+                        </div>
+
+                        <!-- Layer 3: Completeness -->
+                        <div class="validation-layer" style="background: white; border: 2px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 12px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <div style="font-weight: 600; color: #333;">✅ Layer 3: Completeness Check</div>
+                                <div id="completeness-score" style="font-size: 1.3rem; font-weight: bold; color: #999;">--</div>
+                            </div>
+                            <div style="font-size: 0.85rem; color: #666; margin-bottom: 8px;">Bidirectional validation (notes→extraction & extraction→notes)</div>
+                            <div id="completeness-progress" style="background: #f0f0f0; height: 8px; border-radius: 4px; overflow: hidden;">
+                                <div style="background: #999; height: 100%; width: 0%; transition: width 0.3s;"></div>
+                            </div>
+                            <div id="completeness-details" style="margin-top: 10px; font-size: 0.85rem; color: #666; display: none;"></div>
+                        </div>
+
+                        <!-- Layer 4: Consistency -->
+                        <div class="validation-layer" style="background: white; border: 2px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 12px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <div style="font-weight: 600; color: #333;">🔬 Layer 4: Consistency Validation</div>
+                                <div id="consistency-score" style="font-size: 1.3rem; font-weight: bold; color: #999;">--</div>
+                            </div>
+                            <div style="font-size: 0.85rem; color: #666; margin-bottom: 8px;">Medical logic checks (functional scores, anatomical rules, cross-field validation)</div>
+                            <div id="consistency-progress" style="background: #f0f0f0; height: 8px; border-radius: 4px; overflow: hidden;">
+                                <div style="background: #999; height: 100%; width: 0%; transition: width 0.3s;"></div>
+                            </div>
+                            <div id="consistency-details" style="margin-top: 10px; font-size: 0.85rem; color: #666; display: none;"></div>
+                        </div>
+
+                        <!-- Layer 5: Proportionality -->
+                        <div class="validation-layer" style="background: white; border: 2px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 12px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <div style="font-weight: 600; color: #333;">📏 Layer 5: Proportionality Check</div>
+                                <div id="proportionality-score" style="font-size: 1.3rem; font-weight: bold; color: #999;">--</div>
+                            </div>
+                            <div style="font-size: 0.85rem; color: #666; margin-bottom: 8px;">Output sizing appropriateness (not too short/long for input)</div>
+                            <div id="proportionality-progress" style="background: #f0f0f0; height: 8px; border-radius: 4px; overflow: hidden;">
+                                <div style="background: #999; height: 100%; width: 0%; transition: width 0.3s;"></div>
+                            </div>
+                            <div id="proportionality-details" style="margin-top: 10px; font-size: 0.85rem; color: #666; display: none;"></div>
+                        </div>
+
+                        <!-- Layer 6: Confidence Calibration -->
+                        <div class="validation-layer" style="background: white; border: 2px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 12px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <div style="font-weight: 600; color: #333;">🎚️ Layer 6: Confidence Calibration</div>
+                                <div id="confidence-score" style="font-size: 1.3rem; font-weight: bold; color: #999;">N/A</div>
+                            </div>
+                            <div style="font-size: 0.85rem; color: #666; margin-bottom: 8px;">Multi-source confidence adjustment based on validation findings</div>
+                            <div style="margin-top: 10px; font-size: 0.85rem; color: #666;">
+                                Applied to extracted data (not applicable to generated notes)
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Errors & Warnings -->
+                    <div id="validationIssues" style="display: none; margin-bottom: 20px;">
+                        <h3 style="font-size: 1.2rem; margin-bottom: 15px; color: #333;">⚠️ Issues & Warnings</h3>
+                        <div id="validationIssuesList" style="background: #fff3cd; border: 2px solid #ffc107; border-radius: 8px; padding: 15px;">
+                            <!-- Issues will be dynamically inserted here -->
+                        </div>
+                    </div>
+
+                    <!-- Placeholder (shown when no validation results) -->
+                    <div id="validationPlaceholder" style="text-align: center; padding: 60px 20px; color: #999;">
+                        <div style="font-size: 4rem; margin-bottom: 20px; opacity: 0.3;">🔍</div>
+                        <p style="font-size: 1.1rem; margin-bottom: 10px;">No validation data available</p>
+                        <p style="font-size: 0.9rem;">Generate a clinical note to see quality validation results here</p>
+                    </div>
+                </div>
+
+                <!-- Tab: Attending Summary (Ultra Summarizer) -->
+                <div class="tab-content" id="tab-attending">
+                    <!-- Compression Mode Selector -->
+                    <div style="background: #f5f5f5; padding: 16px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #ddd;">
+                        <strong style="color: #333; font-size: 1.1rem;">⚡ Compression Mode:</strong>
+                        <div style="display: flex; gap: 15px; margin-top: 12px; flex-wrap: wrap;">
+                            <label style="flex: 1; min-width: 200px; cursor: pointer; background: white; padding: 12px; border-radius: 6px; border: 2px solid #4CAF50; transition: all 0.2s;">
+                                <input type="radio" name="compressionMode" value="standard" checked onchange="updateCompressionInfo()">
+                                <strong style="color: #4CAF50;">📊 Standard DOAP</strong>
+                                <span id="status-standard" style="margin-left: 8px; font-size: 0.75rem; padding: 2px 6px; border-radius: 3px; background: #e0e0e0; color: #666;">⏳ Pending</span>
+                                <div style="font-size: 0.85rem; color: #666; margin-top: 4px;">45 seconds (~120-140 words)</div>
+                            </label>
+                            <label style="flex: 1; min-width: 200px; cursor: pointer; background: white; padding: 12px; border-radius: 6px; border: 2px solid #FF5722; transition: all 0.2s;">
+                                <input type="radio" name="compressionMode" value="ultra" onchange="updateCompressionInfo()">
+                                <strong style="color: #FF5722;">⚡ ULTRATHINK</strong>
+                                <span id="status-ultra" style="margin-left: 8px; font-size: 0.75rem; padding: 2px 6px; border-radius: 3px; background: #e0e0e0; color: #666;">⏳ Pending</span>
+                                <div style="font-size: 0.85rem; color: #666; margin-top: 4px;">15 seconds (~35-50 words)</div>
+                            </label>
+                            <!-- Telegram mode temporarily disabled due to API safety filter issues -->
+                            <!--
+                            <label style="flex: 1; min-width: 200px; cursor: pointer; background: white; padding: 12px; border-radius: 6px; border: 2px solid #9C27B0; transition: all 0.2s;">
+                                <input type="radio" name="compressionMode" value="telegram" onchange="updateCompressionInfo()">
+                                <strong style="color: #9C27B0;">📱 Telegram</strong>
+                                <span id="status-telegram" style="margin-left: 8px; font-size: 0.75rem; padding: 2px 6px; border-radius: 3px; background: #e0e0e0; color: #666;">⏳ Pending</span>
+                                <div style="font-size: 0.85rem; color: #666; margin-top: 4px;">5 seconds (~15-25 words)</div>
+                            </label>
+                            -->
+                        </div>
+                    </div>
+
+                    <!-- Framework Info Display (changes based on mode) -->
+                    <div id="compressionInfoBox" style="background: #e3f2fd; padding: 14px; border-radius: 6px; margin-bottom: 20px; border-left: 4px solid #2196F3;">
+                        <strong>📊 DOAP Framework for Attending Presentation:</strong>
+                        <ul style="margin: 10px 0 0 20px; line-height: 1.8;">
+                            <li><strong>D</strong> - Diagnosis (5 sec): Age, Sex, PMHx, Primary diagnosis</li>
+                            <li><strong>O</strong> - One-liner (10 sec): Exam findings + Imaging results</li>
+                            <li><strong>A</strong> - Assessment (10 sec): Severity + Candidacy</li>
+                            <li><strong>P</strong> - Plan (20 sec): Intervention + Timing + Main concern</li>
+                        </ul>
+                        <p style="margin: 10px 0 0 0; font-style: italic; color: #666;">Target: 45-second presentation to impress attending staff</p>
+                    </div>
+
+                    <textarea id="attendingSummaryText"
+                              style="width: 100%; min-height: 300px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 1rem; padding: 15px; border: 2px solid #2196F3; border-radius: 6px; line-height: 1.8; resize: both;"
+                              placeholder="Attending summary will appear here after note generation..."></textarea>
+
+                    <!-- Stats Display -->
+                    <div style="display: flex; justify-content: space-around; margin-top: 12px; padding: 12px; background: #f9f9f9; border-radius: 6px;">
+                        <div style="text-align: center;">
+                            <div style="font-size: 24px; font-weight: bold; color: #2196F3;" id="summaryWordCount">0</div>
+                            <div style="font-size: 12px; color: #666;">Words</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 24px; font-weight: bold; color: #4CAF50;" id="summarySeconds">0</div>
+                            <div style="font-size: 12px; color: #666;">Seconds</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 24px; font-weight: bold; color: #FF9800;" id="compressionRatio">0%</div>
+                            <div style="font-size: 12px; color: #666;">Compression</div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 15px; display: flex; gap: 12px;">
+                        <button onclick="testAttendingSummary()" style="flex: 1; padding: 12px; background: #FF9800; color: white;">
+                            🧪 Test (Use Current Note)
+                        </button>
+                        <button onclick="copyAttendingSummary()" class="success" style="flex: 1; padding: 12px;">
+                            📋 Copy Summary
+                        </button>
+                        <button onclick="regenerateAttendingSummary()" style="flex: 1; padding: 12px; background: #2196F3; color: white;">
+                            🔄 Regenerate
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load Clinical Scales Database -->
+    <script type="module" src="main.js"></script>
+</body>
+</html>
